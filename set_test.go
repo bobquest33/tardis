@@ -17,6 +17,7 @@ func init() {
 	if err != nil {
 		panic("err connecting to redis")
 	}
+	set.Conn.Do("FLUSHALL")
 }
 
 func TestMonitorAddsSampleToSet(t *testing.T) {
@@ -25,17 +26,17 @@ func TestMonitorAddsSampleToSet(t *testing.T) {
 		t.Fatalf("Error while adding sample: %v", err)
 	}
 
-	samples, times, err := set.Samples(0, 1000)
+	samples, times, err := set.Members(0, 1000)
 	if err != nil {
 		t.Fatalf("Error while returning samples: %v", err)
 	}
 
 	if len(samples) != 1 || samples[0] != "1234" || len(times) != 1 || times[0] != 0 {
-		t.Fatalf("Samples returned incorrect: samples %v, times %v", samples, times)
+		t.Fatalf("Members returned incorrect: samples %v, times %v", samples, times)
 	}
 }
 
-func TestMonitorCleansSamples(t *testing.T) {
+func TestMonitorCleansMembers(t *testing.T) {
 	err := set.AddMember("1234", 1000)
 	if err != nil {
 		t.Fatalf("Error while adding sample: %v", err)
@@ -46,14 +47,31 @@ func TestMonitorCleansSamples(t *testing.T) {
 		t.Fatalf("Error while adding sample: %v", err)
 	}
 
-	Clean(1500, set.Conn)
+	err = Clean(1500, set.Conn, nil)
+	if err != nil {
+		t.Fatalf("Error while cleaning sets: %v", err)
+	}
 
-	samples, times, err := set.Samples(0, 3000)
+	samples, times, err := set.Members(0, 4000)
 	if err != nil {
 		t.Fatalf("Error while returning samples: %v", err)
 	}
 
 	if len(samples) != 1 || len(times) != 1 || samples[0] != "5678" || times[0] != 2000 {
-		t.Fatalf("Samples returned incorrect: samples %v, times %v", samples, times)
+		t.Fatalf("Members returned incorrect: samples %v, times %v", samples, times)
+	}
+
+	err = Clean(3000, set.Conn, nil)
+	if err != nil {
+		t.Fatalf("Error while cleaning sets: %v", err)
+	}
+
+	samples, times, err = set.Members(0, 4000)
+	if err != nil {
+		t.Fatalf("Error while returning samples: %v", err)
+	}
+
+	if len(samples) != 0 || len(times) != 0 {
+		t.Fatalf("After second Clean, incorrect state: samples %v, times %v", samples, times)
 	}
 }
