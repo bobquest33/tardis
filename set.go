@@ -16,31 +16,13 @@ type Set struct {
 	Conn redis.Conn
 }
 
-func (s *Set) AddMember(value string, timestamp int64) error {
+func (s *Set) Add(value string, timestamp int64) error {
 	_, err := s.Conn.Do("ZADD", s.Key, timestamp, value)
 	if err != nil {
 		return err
 	}
 
 	return s.trackLowest()
-}
-
-func (s *Set) trackLowest() error {
-	exist, _, lowest, err := s.First()
-	if err != nil {
-		return err
-	}
-
-	if exist == false {
-		return nil
-	}
-
-	_, err = s.Conn.Do("ZADD", SetKey, lowest, s.Key)
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s *Set) First() (bool, string, int64, error) {
@@ -63,37 +45,16 @@ func (s *Set) First() (bool, string, int64, error) {
 }
 
 func (s *Set) AddValue(value string) error {
-	return s.AddMember(value, time.Now().Unix())
+	return s.Add(value, time.Now().Unix())
 }
 
-func (s *Set) Members(start_time int64, end_time int64) ([]string, []int64, error) {
+func (s *Set) Get(start_time int64, end_time int64) ([]string, []int64, error) {
 	return s.parseResponse(redis.Strings(s.Conn.Do("ZRANGEBYSCORE", s.Key, start_time, end_time, "WITHSCORES")))
-}
-
-func (s *Set) parseResponse(response []string, err error) ([]string, []int64, error) {
-	if err != nil {
-		return nil, nil, err
-	}
-	var events []string
-	var times []int64
-	for i, resp := range response {
-		if i%2 == 0 {
-			events = append(events, resp)
-		} else {
-			val, err := strconv.ParseInt(resp, 0, 64)
-			if err != nil {
-				return nil, nil, err
-			}
-			times = append(times, val)
-		}
-	}
-
-	return events, times, nil
 }
 
 func (s *Set) Expire(timestamp int64, fn func(key string, value string, score int64) error) error {
 	// race condition here :)
-	members, scores, err := s.parseResponse(redis.Strings(s.Conn.Do("ZRANGEBYSCORE", s.Key, 0, timestamp, "WITHSCORES")))
+	members, scores, err := s.Get(0, timestamp)
 	if err != nil {
 		return err
 	}
@@ -125,4 +86,43 @@ func Clean(timestamp int64, conn redis.Conn, fn func(key string, value string, s
 		}
 		return set.trackLowest()
 	})
+}
+
+func (s *Set) trackLowest() error {
+	exist, _, lowest, err := s.First()
+	if err != nil {
+		return err
+	}
+
+	if exist == false {
+		return nil
+	}
+
+	_, err = s.Conn.Do("ZADD", SetKey, lowest, s.Key)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Set) parseResponse(response []string, err error) ([]string, []int64, error) {
+	if err != nil {
+		return nil, nil, err
+	}
+	var events []string
+	var times []int64
+	for i, resp := range response {
+		if i%2 == 0 {
+			events = append(events, resp)
+		} else {
+			val, err := strconv.ParseInt(resp, 0, 64)
+			if err != nil {
+				return nil, nil, err
+			}
+			times = append(times, val)
+		}
+	}
+
+	return events, times, nil
 }
