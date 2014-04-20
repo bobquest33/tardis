@@ -5,12 +5,12 @@ import (
 	"time"
 )
 
-type Conn struct {
+type RedisConn struct {
 	Pool    *redis.Pool
 	Address string
 }
 
-func (c *Conn) Conn() (redis.Conn, error) {
+func (c *RedisConn) Conn() (redis.Conn, error) {
 	var conn redis.Conn
 	var err error
 
@@ -25,7 +25,7 @@ func (c *Conn) Conn() (redis.Conn, error) {
 	return conn, nil
 }
 
-func (r *Conn) InitPool(size int) error {
+func (r *RedisConn) InitPool(size int) error {
 	r.Pool = &redis.Pool{
 		MaxIdle:     size,
 		IdleTimeout: 30 * time.Second,
