@@ -25,8 +25,24 @@ func (s *Set) Add(value string, timestamp int64) error {
 	return s.trackLowest()
 }
 
+func (s *Set) AddValue(value string) error {
+	return s.Add(value, time.Now().Unix())
+}
+
 func (s *Set) First() (bool, string, int64, error) {
-	lowest, err := redis.Strings(s.Conn.Do("ZRANGE", s.Key, 0, 0, "WITHSCORES"))
+	return s.GetRank(0)
+}
+
+func (s *Set) Last() (bool, string, int64, error) {
+	return s.GetRank(-1)
+}
+
+func (s *Set) Count() (int64, error) {
+	return redis.Int64(s.Conn.Do("ZCARD", s.Key))
+}
+
+func (s *Set) GetRank(rank int64) (bool, string, int64, error) {
+	lowest, err := redis.Strings(s.Conn.Do("ZRANGE", s.Key, rank, rank, "WITHSCORES"))
 	if err != nil {
 		return false, "", 0, err
 	}
@@ -42,10 +58,6 @@ func (s *Set) First() (bool, string, int64, error) {
 	}
 
 	return true, lowest[0], score, nil
-}
-
-func (s *Set) AddValue(value string) error {
-	return s.Add(value, time.Now().Unix())
 }
 
 func (s *Set) Get(start_time int64, end_time int64) ([]string, []int64, error) {

@@ -47,6 +47,15 @@ func TestClean(t *testing.T) {
 		t.Fatalf("Error while adding sample: %v", err)
 	}
 
+	count, err := set.Count()
+	if err != nil {
+		t.Fatalf("Error while cleaning sets: %v", err)
+	}
+
+	if count != 2 {
+		t.Fatalf("Expected cardinality of 2, got %v", count)
+	}
+
 	err = Clean(1500, set.Conn, nil)
 	if err != nil {
 		t.Fatalf("Error while cleaning sets: %v", err)
