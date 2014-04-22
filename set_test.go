@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	conn Conn
+	conn RedisConn
 	set  = Set{Key: "set1"}
 )
 
