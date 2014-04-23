@@ -56,12 +56,17 @@ func (s *MonitorSuite) TestQualify(c *check.C) {
 
 func (s *MonitorSuite) TestDefConTime(c *check.C) {
 	// go to defcon1 if next event at (last event) + mean + 1stddev
-	expected := 136 + 7 + 3
-
 	defcon1, err := monitor.DefConTime(1)
 
 	c.Assert(err, check.IsNil)
-	c.Assert(defcon1, check.Equals, int64(expected))
+	c.Assert(defcon1, check.Equals, int64(149))
+
+	// go to defcon5 if next event at (last event) + mean + (5 * std dev)
+	defcon5, err := monitor.DefConTime(5)
+
+	c.Assert(err, check.IsNil)
+	c.Assert(defcon5, check.Equals, int64(162))
+
 }
 
 func TestDefConAt(t *testing.T) {

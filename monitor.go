@@ -30,7 +30,7 @@ func (m *Monitor) DefConTime(defcon int64) (int64, error) {
 
 	mean := metrics.SampleMean(deltas)
 	stdDev := metrics.SampleStdDev(deltas)
-	
+
 	_, _, lastTime, err := m.Set.Last()
 
 	if err != nil {
