@@ -9,7 +9,7 @@ import (
 var (
 	monitor = &Monitor{QualifyCount: 5}
 
-	deltas = []int64{0, 9, 2, 5, 4, 12, 7, 8, 11, 9, 3, 7, 4, 12, 5, 4, 10, 9, 6, 9, 4}
+	deltas = []int64{9, 2, 5, 4, 12, 7, 8, 11, 9, 3, 7, 4, 12, 5, 4, 10, 9, 6, 9, 4}
 )
 
 func TestMonitor(t *testing.T) { check.TestingT(t) }
@@ -35,11 +35,11 @@ func (s *MonitorSuite) SetUpTest(c *check.C) {
 	cumulative = 0
 
 	for _, delta := range deltas {
+		cumulative += delta
 		err := monitor.Add(fmt.Sprintf("data-%v", cumulative), cumulative)
 		if err != nil {
 			panic("err connecting to redis on :6379")
 		}
-		cumulative += delta
 	}
 }
 
@@ -54,11 +54,17 @@ func (s *MonitorSuite) TestQualify(c *check.C) {
 	c.Assert(qualify, check.Equals, false)
 }
 
-//func TestDefConTime(t *testing.T) {
-//	expected := 7 + 0
-//}
+func (s *MonitorSuite) TestDefConTime(c *check.C) {
+	// go to defcon1 if next event at (last event) + mean + 1stddev
+	expected := 136 + 7 + 3
 
-//func TestDefConAt(t *testing.T) {
+	defcon1, err := monitor.DefConTime(1)
+
+	c.Assert(err, check.IsNil)
+	c.Assert(defcon1, check.Equals, int64(expected))
+}
+
+func TestDefConAt(t *testing.T) {
 	
-//}
+}
 
