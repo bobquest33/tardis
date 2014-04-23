@@ -69,7 +69,18 @@ func (s *MonitorSuite) TestDefConTime(c *check.C) {
 
 }
 
-func TestDefConAt(t *testing.T) {
-	
+func (s *MonitorSuite) TestDefConAt(c *check.C) {
+	defcon, err := monitor.DefConAt(125)
+	c.Assert(err, check.IsNil)
+	c.Assert(defcon, check.Equals, int64(0))
+
+	defcon, err = monitor.DefConAt(150)
+	c.Assert(err, check.IsNil)
+	c.Assert(defcon, check.Equals, int64(1))
+
+	defcon, err = monitor.DefConAt(163)
+	c.Assert(err, check.IsNil)
+	c.Assert(defcon, check.Equals, int64(5))
 }
+
 

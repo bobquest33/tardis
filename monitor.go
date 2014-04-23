@@ -40,8 +40,27 @@ func (m *Monitor) DefConTime(defcon int64) (int64, error) {
 	return int64(float64(lastTime) + mean + (stdDev * float64(defcon))), nil
 }
 
-func (m *Monitor) DefConAt(timestamp int64) int {
-	return 0
+func (m *Monitor) DefConAt(timestamp int64) (int64, error) {
+	deltas, err := m.deltas()
+	if err != nil {
+		return 0, err
+	}
+
+	mean := metrics.SampleMean(deltas)
+	stdDev := metrics.SampleStdDev(deltas)
+
+	_, _, lastTime, err := m.Set.Last()
+
+	if err != nil {
+		return 0, err
+	}
+
+	since := timestamp - lastTime - int64(mean)
+	if since < 0 {
+		return 0, nil
+	}
+	
+	return int64(float64(since) / stdDev), nil
 }
 
 func (m *Monitor) deltas() ([]int64, error) {
