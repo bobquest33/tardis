@@ -1,7 +1,7 @@
 package tardis
 
 import (
-	"testing"
+	"gopkg.in/check.v1"
 )
 
 var (
@@ -9,78 +9,65 @@ var (
 	set  = Set{Key: "set1"}
 )
 
-func init() {
+type SetSuite struct{}
+var _ = check.Suite(&SetSuite{})
+
+func (s *SetSuite) SetUpSuite(c *check.C) {
 	var err error
-	conn.Address = ":6379"
+	conn := &RedisConn{Address: ":6379"}
+
 	set.Conn, err = conn.Conn()
 
 	if err != nil {
-		panic("err connecting to redis")
+		panic("err connecting to redis on :6379")
 	}
+}
+
+func (s *SetSuite) SetUpTest(c *check.C) {
 	set.Conn.Do("FLUSHALL")
 }
 
-func TestAddToSet(t *testing.T) {
+func (s *SetSuite) TestAddToSet(c *check.C) {
 	err := set.Add("1234", 0)
-	if err != nil {
-		t.Fatalf("Error while adding sample: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	samples, times, err := set.Get(0, 1000)
-	if err != nil {
-		t.Fatalf("Error while returning samples: %v", err)
-	}
-
-	if len(samples) != 1 || samples[0] != "1234" || len(times) != 1 || times[0] != 0 {
-		t.Fatalf("Get returned incorrect: samples %v, times %v", samples, times)
-	}
+	c.Assert(err, check.IsNil)
+	c.Assert(len(samples), check.Equals, 1)
+	c.Assert(len(times), check.Equals, 1)
+	c.Assert(samples[0], check.Equals, "1234")
+	c.Assert(times[0], check.Equals, int64(0))
 }
 
-func TestClean(t *testing.T) {
+func (s *SetSuite) TestClean(c *check.C) {
 	err := set.Add("1234", 1000)
-	if err != nil {
-		t.Fatalf("Error while adding sample: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	err = set.Add("5678", 2000)
-	if err != nil {
-		t.Fatalf("Error while adding sample: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	count, err := set.Count()
-	if err != nil {
-		t.Fatalf("Error while cleaning sets: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	if count != 2 {
-		t.Fatalf("Expected cardinality of 2, got %v", count)
-	}
+	c.Assert(count, check.Equals, int64(2))
 
 	err = Clean(1500, set.Conn, nil)
-	if err != nil {
-		t.Fatalf("Error while cleaning sets: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	samples, times, err := set.Get(0, 4000)
-	if err != nil {
-		t.Fatalf("Error while returning samples: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	if len(samples) != 1 || len(times) != 1 || samples[0] != "5678" || times[0] != 2000 {
-		t.Fatalf("Get returned incorrect: samples %v, times %v", samples, times)
-	}
+	c.Assert(len(samples), check.Equals, 1)
+	c.Assert(len(times), check.Equals, 1)
+	c.Assert(samples[0], check.Equals, "5678")
+	c.Assert(times[0], check.Equals, int64(2000))
 
 	err = Clean(3000, set.Conn, nil)
-	if err != nil {
-		t.Fatalf("Error while cleaning sets: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
 	samples, times, err = set.Get(0, 4000)
-	if err != nil {
-		t.Fatalf("Error while returning samples: %v", err)
-	}
+	c.Assert(err, check.IsNil)
 
-	if len(samples) != 0 || len(times) != 0 {
-		t.Fatalf("After second Clean, incorrect state: samples %v, times %v", samples, times)
-	}
+	c.Assert(len(samples), check.Equals, 0)
+	c.Assert(len(times), check.Equals, 0)
 }
