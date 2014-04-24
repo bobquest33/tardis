@@ -11,3 +11,5 @@ services:
 script:
  - go test -v ./...
 
+install:
+  - go get gopkg.in/check.v1
