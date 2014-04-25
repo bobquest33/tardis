@@ -54,33 +54,19 @@ func (s *MonitorSuite) TestQualify(c *check.C) {
 	c.Assert(qualify, check.Equals, false)
 }
 
-func (s *MonitorSuite) TestDefConTime(c *check.C) {
-	// go to defcon1 if next event at (last event) + mean + 1stddev
-	defcon1, err := monitor.DefConTime(1)
-
-	c.Assert(err, check.IsNil)
-	c.Assert(defcon1, check.Equals, int64(149))
-
-	// go to defcon5 if next event at (last event) + mean + (5 * std dev)
-	defcon5, err := monitor.DefConTime(5)
-
-	c.Assert(err, check.IsNil)
-	c.Assert(defcon5, check.Equals, int64(162))
-
-}
-
 func (s *MonitorSuite) TestDefConAt(c *check.C) {
-	defcon, err := monitor.DefConAt(125)
+	defcon, nextTimestamp, err := monitor.Check(125)
 	c.Assert(err, check.IsNil)
 	c.Assert(defcon, check.Equals, int64(0))
+	c.Assert(nextTimestamp, check.Equals, int64(149))
 
-	defcon, err = monitor.DefConAt(150)
+	defcon, nextTimestamp, err = monitor.Check(150)
 	c.Assert(err, check.IsNil)
 	c.Assert(defcon, check.Equals, int64(1))
+	c.Assert(nextTimestamp, check.Equals, int64(152))
 
-	defcon, err = monitor.DefConAt(163)
+	defcon, nextTimestamp, err = monitor.Check(163)
 	c.Assert(err, check.IsNil)
 	c.Assert(defcon, check.Equals, int64(5))
+	c.Assert(nextTimestamp, check.Equals, int64(165))
 }
-
-

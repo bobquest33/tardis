@@ -22,10 +22,10 @@ func (m *Monitor) Qualify() (bool, error) {
 	return true, nil
 }
 
-func (m *Monitor) DefConTime(defcon int64) (int64, error) {
+func (m *Monitor) Check(timestamp int64) (int64, int64, error) {
 	deltas, err := m.deltas()
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	mean := metrics.SampleMean(deltas)
@@ -34,33 +34,18 @@ func (m *Monitor) DefConTime(defcon int64) (int64, error) {
 	_, _, lastTime, err := m.Set.Last()
 
 	if err != nil {
-		return 0, err
-	}
-
-	return int64(float64(lastTime) + mean + (stdDev * float64(defcon))), nil
-}
-
-func (m *Monitor) DefConAt(timestamp int64) (int64, error) {
-	deltas, err := m.deltas()
-	if err != nil {
-		return 0, err
-	}
-
-	mean := metrics.SampleMean(deltas)
-	stdDev := metrics.SampleStdDev(deltas)
-
-	_, _, lastTime, err := m.Set.Last()
-
-	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	since := timestamp - lastTime - int64(mean)
-	if since < 0 {
-		return 0, nil
-	}
 	
-	return int64(float64(since) / stdDev), nil
+	currentDefcon := int64(float64(since) / stdDev)
+	if currentDefcon < 0 {
+		currentDefcon = 0
+	}
+	nextDefconTimestamp := int64(float64(lastTime) + mean + (stdDev * float64(currentDefcon+1)))
+
+	return currentDefcon, nextDefconTimestamp, nil
 }
 
 func (m *Monitor) deltas() ([]int64, error) {
