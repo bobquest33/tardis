@@ -7,13 +7,10 @@ import (
 	"time"
 )
 
-var (
-	SetKey = "tardis:sets"
-)
-
 type Set struct {
 	Key  string
 	Conn redis.Conn
+	TrackingKey string
 }
 
 func (s *Set) Add(value string, timestamp int64) error {
@@ -88,10 +85,11 @@ func (s *Set) Expire(timestamp int64, fn func(key string, value string, score in
 	return nil
 }
 
-func Clean(timestamp int64, conn redis.Conn, fn func(key string, value string, score int64) error) error {
-	sets := &Set{Key: SetKey, Conn: conn}
+func Clean(trackingKey string, timestamp int64, conn redis.Conn, fn func(key string, value string, score int64) error) error {
+	sets := &Set{Key: trackingKey, Conn: conn}
+
 	return sets.Expire(timestamp, func(key string, value string, score int64) error {
-		set := &Set{Key: value, Conn: sets.Conn}
+		set := &Set{Key: value, Conn: sets.Conn, TrackingKey: trackingKey}
 		err := set.Expire(timestamp, fn)
 		if err != nil {
 			return err
@@ -101,6 +99,10 @@ func Clean(timestamp int64, conn redis.Conn, fn func(key string, value string, s
 }
 
 func (s *Set) trackLowest() error {
+	if s.TrackingKey == "" {
+		return nil
+	}
+
 	exist, _, lowest, err := s.First()
 	if err != nil {
 		return err
@@ -110,7 +112,7 @@ func (s *Set) trackLowest() error {
 		return nil
 	}
 
-	_, err = s.Conn.Do("ZADD", SetKey, lowest, s.Key)
+	_, err = s.Conn.Do("ZADD", s.TrackingKey, lowest, s.Key)
 
 	if err != nil {
 		return err

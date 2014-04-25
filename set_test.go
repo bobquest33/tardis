@@ -2,11 +2,12 @@ package tardis
 
 import (
 	"gopkg.in/check.v1"
+	"time"
 )
 
 var (
 	conn RedisConn
-	set  = Set{Key: "set1"}
+	set  = Set{Key: "set1", TrackingKey: "tardis:sets"}
 )
 
 type SetSuite struct{}
@@ -25,6 +26,7 @@ func (s *SetSuite) SetUpSuite(c *check.C) {
 
 func (s *SetSuite) SetUpTest(c *check.C) {
 	set.Conn.Do("FLUSHALL")
+	set.TrackingKey = "tardis:sets"
 }
 
 func (s *SetSuite) TestAddToSet(c *check.C) {
@@ -48,10 +50,9 @@ func (s *SetSuite) TestClean(c *check.C) {
 
 	count, err := set.Count()
 	c.Assert(err, check.IsNil)
-
 	c.Assert(count, check.Equals, int64(2))
 
-	err = Clean(1500, set.Conn, nil)
+	err = Clean("tardis:sets", 1500, set.Conn, nil)
 	c.Assert(err, check.IsNil)
 
 	samples, times, err := set.Get(0, 4000)
@@ -62,7 +63,7 @@ func (s *SetSuite) TestClean(c *check.C) {
 	c.Assert(samples[0], check.Equals, "5678")
 	c.Assert(times[0], check.Equals, int64(2000))
 
-	err = Clean(3000, set.Conn, nil)
+	err = Clean("tardis:sets", 3000, set.Conn, nil)
 	c.Assert(err, check.IsNil)
 
 	samples, times, err = set.Get(0, 4000)
@@ -71,3 +72,21 @@ func (s *SetSuite) TestClean(c *check.C) {
 	c.Assert(len(samples), check.Equals, 0)
 	c.Assert(len(times), check.Equals, 0)
 }
+
+func (s *SetSuite) TestSchedulerPattern(c *check.C) {
+	ran := ""
+
+	set.TrackingKey = ""
+	set.Key = "scheduler"
+
+	err := set.Add("run body", time.Now().Unix()-5)
+	c.Assert(err, check.IsNil)
+
+	err = set.Expire(time.Now().Unix(), func (key string, value string, score int64) error {
+		ran = value
+		return nil
+	})
+	c.Assert(err, check.IsNil)
+	c.Assert(ran, check.Equals, "run body")
+}
+
