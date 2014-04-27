@@ -90,3 +90,24 @@ func (s *SetSuite) TestSchedulerPattern(c *check.C) {
 	c.Assert(ran, check.Equals, "run body")
 }
 
+func (s *SetSuite) TestRemove(c *check.C) {
+	err := set.Add("1234", 1000)
+	c.Assert(err, check.IsNil)
+
+	err = set.Add("5678", 2000)
+	c.Assert(err, check.IsNil)
+
+	err = set.Remove("1234")
+	c.Assert(err, check.IsNil)
+
+	count, err := set.Count()
+	c.Assert(err, check.IsNil)
+	c.Assert(count, check.Equals, int64(1))
+
+	exist, val, timestamp, err := set.First()
+	c.Assert(exist, check.Equals, true)
+	c.Assert(err, check.IsNil)
+	c.Assert(val, check.Equals, "5678")
+	c.Assert(timestamp, check.Equals, int64(2000))
+
+}

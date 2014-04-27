@@ -22,6 +22,15 @@ func (s *Set) Add(value string, timestamp int64) error {
 	return s.trackLowest()
 }
 
+func (s *Set) Remove(value string) error {
+	_, err := s.Conn.Do("ZREM", s.Key, value)
+	if err != nil {
+		return err
+	}
+
+	return s.trackLowest()
+}
+
 func (s *Set) AddValue(value string) error {
 	return s.Add(value, time.Now().Unix())
 }
@@ -109,6 +118,10 @@ func (s *Set) trackLowest() error {
 	}
 
 	if exist == false {
+		_, err := s.Conn.Do("ZREM", s.TrackingKey, s.Key)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
