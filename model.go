@@ -25,7 +25,7 @@ func linearInterpolation(p1 Point, p2 Point, x float64) float64{
   return math.Floor(a*x + b) 
 }
 
-func (m *Model) WarpTime(t int64) int64 {
+func (m *Model) TimeWarp(t int64) int64 {
   dt := time.Unix(t,0)
   weekDay := (dt.Weekday() - 1 ) % 7  - time.Monday - 1 
   yr, mth, day  := dt.Date()
@@ -38,7 +38,7 @@ func (m *Model) WarpTime(t int64) int64 {
   return startOfWeek.Add(time.Duration(int64(modelFraction * float64(hoursInWeek)))).Unix() //model timestamp
 }
 
-func (m *Model) UnWarpTime(t int64) int64 {
+func (m *Model) TimeUnWarp(t int64) int64 {
   //do it all baaaackwards - is that actually needed?
   return 0
 }
