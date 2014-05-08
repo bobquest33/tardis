@@ -11,6 +11,7 @@ var (
 )
 
 type SetSuite struct{}
+
 var _ = check.Suite(&SetSuite{})
 
 func (s *SetSuite) SetUpSuite(c *check.C) {
@@ -82,7 +83,7 @@ func (s *SetSuite) TestSchedulerPattern(c *check.C) {
 	err := set.Add("run body", time.Now().Unix()-5)
 	c.Assert(err, check.IsNil)
 
-	err = set.Expire(time.Now().Unix(), func (key string, value string, score int64) error {
+	err = set.Expire(time.Now().Unix(), func(key string, value string, score int64) error {
 		ran = value
 		return nil
 	})

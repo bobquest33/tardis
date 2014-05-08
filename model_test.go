@@ -7,20 +7,20 @@ import (
 
 type ModelSuite struct {
   model Model
-  set Set
+  monitor Monitor
 }
 var _ = check.Suite(&ModelSuite{})
 
 func (s *ModelSuite) SetUpSuite(c *check.C) {
   s.model = Model{
-    timeWarp: []Point{Point{ X: 0.0, Y: 0.0},Point{ X: 1.0, Y: 1.0}},
-    stat: func(prior []int64, cur int64) float64 {
-      return 2.0 
+    TimeWarp: []Point{Point{ X: 0.0, Y: 0.0},Point{ X: 1.0, Y: 1.0}},
+    Stat: func(prior []int64, cur int64) (float64, int64) {
+      return 2.0, 0 
     }}
-  s.set = Set { Key: "wut", TrackingKey: "deprecated?"}
+  s.monitor = Monitor{Set: Set{ Key: "wut", TrackingKey: "deprecated?"}, QualifyCount: 1}
   conn := &RedisConn{Address: ":6379"}
   var err error
-  s.set.Conn, err = conn.Conn()
+  s.monitor.Set.Conn, err = conn.Conn()
 
   if err != nil {
     panic("err connecting to redis on :6379")
@@ -33,6 +33,11 @@ func (s *ModelSuite) TestStartOfWeek(c *check.C) {
   c.Check(day,check.Equals,time.Monday)
   c.Check(t.Hour(),check.Equals,0)
   c.Check(t.Minute(),check.Equals,0)
+  t, _ =time.Parse(time.RFC3339, "2014-04-27T04:19:36Z" )
+  t = startOfWeek(t.Unix())
+  day = t.Weekday()
+  c.Check(day,check.Equals,time.Monday)
+  c.Check(t.Day(),check.Equals, 21)
 }
 
 func (s *ModelSuite) TestLinearInterpolation(c *check.C) {
@@ -47,7 +52,8 @@ func (s *ModelSuite) TestLinearInterpolation(c *check.C) {
 }
 
 func (s *ModelSuite) TestProbability(c *check.C) {
-  pr, err := s.model.Probability(&s.set, time.Now().Unix())
-  c.Assert(err,check.IsNil)
-  c.Check(pr,check.Equals,  2.0)
+  _, _, err:= s.model.Probability(&s.monitor,time.Now().Unix())
+  c.Assert(err,check.NotNil)
+
+  // c.Check(pr,check.Equals,  2.0)
 }

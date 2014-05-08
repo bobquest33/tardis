@@ -6,10 +6,11 @@ import (
 )
 
 type SchedulerSuite struct{}
+
 var _ = check.Suite(&SchedulerSuite{})
 
 var (
-	scheduler = &Scheduler{Period: 1 * time.Second, Set: Set{Key:"scheduler"}}
+	scheduler = &Scheduler{Period: 1 * time.Second, Set: Set{Key: "scheduler"}}
 )
 
 func (s *SchedulerSuite) SetUpSuite(c *check.C) {
@@ -29,7 +30,7 @@ func (s *SchedulerSuite) SetUpTest(c *check.C) {
 }
 
 func (s *SchedulerSuite) TestScheduler(c *check.C) {
-	
+
 	var ranJob string
 	var ranTime int64
 
@@ -44,8 +45,7 @@ func (s *SchedulerSuite) TestScheduler(c *check.C) {
 
 	scheduler.Start()
 
-   	time.Sleep(2 * time.Second)
+	time.Sleep(2 * time.Second)
 	c.Assert(ranJob, check.Equals, "a job")
 	c.Assert(ranTime, check.Equals, expectedTime)
 }
-
