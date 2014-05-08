@@ -1,8 +1,9 @@
 package tardis
 import (
-"math"
+// "math"
 "time"
 "sort"
+// "fmt"
 )
 const (
   hoursInWeek = 7 * 24 * time.Hour
@@ -20,16 +21,15 @@ type Model struct {
 
 func linearInterpolation(p1 Point, p2 Point, x float64) float64{
   // y = ax + b
-  a := (p2.Y - p1.X) / (p2.X - p1.X)
-  b := p1.Y - a*p1.X
-  return math.Floor(a*x + b) 
+  a := (p2.Y - p1.Y) / (p2.X - p1.X)
+  b := p1.Y - a*p1.X 
+  return a*x + b
 }
 func startOfWeek(timeStamp int64) time.Time {
   dt := time.Unix(timeStamp,0)
-  weekDay := (dt.Weekday() - 1 ) % 7  - time.Monday - 1 
+  weekDay := (dt.Weekday() - 1 ) % 7
   yr, mth, day  := dt.Date()
-  _, week := dt.ISOWeek()
-  return time.Date(yr,mth,week * (day - int(weekDay)),0,0,0,0,time.UTC)  
+  return time.Date(yr,mth, (day - int(weekDay)),0,0,0,0,time.UTC)  
 }
 func (m *Model) TimeWarp(t int64) int64 {
   startOfWeek := startOfWeek(t)
