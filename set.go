@@ -71,7 +71,7 @@ func (s *Set) Get(start_time int64, end_time int64) ([]string, []int64, error) {
 }
 
 func (s *Set) GetN(start_time int64, limit int64) ([]string, []int64, error) {
-	return s.parseResponse(redis.Strings(s.Conn.Do("ZRANGEBYSCORE", s.Key, "-inf", start_time, "WITHSCORES", "LIMIT", "0", limit)))
+	return s.parseResponse(redis.Strings(s.Conn.Do("ZREVRANGEBYSCORE", s.Key, start_time, "-inf", "WITHSCORES", "LIMIT", "0", limit)))
 }
 
 func (s *Set) Expire(timestamp int64, fn func(key string, value string, score int64) error) error {

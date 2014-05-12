@@ -8,6 +8,11 @@ import (
   "errors"
 )
 
+type Int64Slice []int64
+func (a Int64Slice) Len() int { return len(a) }
+func (a Int64Slice) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a Int64Slice) Less(i, j int) bool { return a[i] < a[j] }
+
 const (
 	hoursInWeek = 7 * 24 * time.Hour
 )
@@ -44,18 +49,29 @@ func (m *Model) WarpTime(t int64) int64 {
 }
 
 func (m *Model) UnWarpTime(t int64) int64 {
-	//do it all baaaackwards - is that actually needed?
-	return t
+
+  startOfWeek := startOfWeek(t)
+  dur := time.Unix(t, 0).Sub(startOfWeek)
+  modelFraction := float64(dur) / float64(hoursInWeek) // true elapsed percentage of week
+  i := sort.Search(len(m.TimeWarp), func(i int) bool { return m.TimeWarp[i].Y >= modelFraction })
+  p1 := Point{X: m.TimeWarp[i-1].Y, Y:m.TimeWarp[i-1].X}
+  p2 := Point{X: m.TimeWarp[i].X, Y:m.TimeWarp[i].X}
+  realFraction := linearInterpolation(p1, p2, modelFraction)        // adjusted percentage of week
+  return startOfWeek.Add(time.Duration(int64(realFraction * float64(hoursInWeek)))).Unix() //model timestamp
 }
 //Expects array of delta values!
 func (m *Model) Probability(mon *Monitor, testPoint int64) (float64, int64, error) {
-  _, times, err := mon.GetN(testPoint, 150)
+  _, times, err := mon.GetN(testPoint, 250)
   if err != nil  {
     return 0.0, 0, err
   }
+
   if len(times) == 0 {
     return 0.0, 0, errors.New("Insufficient data.")
   }
+
+  sort.Sort(Int64Slice(times))
+  
 	transformedTimes := make([]int64, len(times))
 	for i, t := range times {
 		transformedTimes[i] = m.WarpTime(t)
