@@ -1,9 +1,10 @@
 package tardis
 
 import (
-	"time"
-	"fmt"
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"time"
 )
 
 func Epoch(event_time string) (int64, error) {
@@ -20,15 +21,16 @@ func Epoch(event_time string) (int64, error) {
 
 func ParseEvent(event []byte) (map[string]string, error) {
 	var raw map[string]interface{}
-
-	err := json.Unmarshal(event, &raw)
+	dec := json.NewDecoder(bytes.NewReader(event))
+	dec.UseNumber()
+	err := dec.Decode(&raw)
 	if err != nil {
 		return nil, err
 	}
 
- 	parsed := make(map[string]string)
+	parsed := make(map[string]string)
 
-	for k, v := range(raw) {
+	for k, v := range raw {
 		parsed[k] = fmt.Sprintf("%v", v)
 	}
 	return parsed, nil

@@ -11,6 +11,7 @@ var (
 )
 
 type SetSuite struct{}
+
 var _ = check.Suite(&SetSuite{})
 
 func (s *SetSuite) SetUpSuite(c *check.C) {
@@ -82,12 +83,27 @@ func (s *SetSuite) TestSchedulerPattern(c *check.C) {
 	err := set.Add("run body", time.Now().Unix()-5)
 	c.Assert(err, check.IsNil)
 
-	err = set.Expire(time.Now().Unix(), func (key string, value string, score int64) error {
+	err = set.Expire(time.Now().Unix(), func(key string, value string, score int64) error {
 		ran = value
 		return nil
 	})
 	c.Assert(err, check.IsNil)
 	c.Assert(ran, check.Equals, "run body")
+}
+
+func (s *SetSuite) TestSetGetN(c *check.C) {
+	err := set.Add("1234", 1)
+	c.Assert(err, check.IsNil)
+	err = set.Add("3456", 2)
+	c.Assert(err, check.IsNil)
+	err = set.Add("4567", 3)
+
+	keys, scores, err := set.GetN(3, 2)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(len(keys), check.Equals, 2)
+	c.Check(int(scores[0]), check.Equals, 3) // cast from int64 to int
+	c.Check(int(scores[1]), check.Equals, 2)
 }
 
 func (s *SetSuite) TestRemove(c *check.C) {

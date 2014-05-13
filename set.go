@@ -8,8 +8,8 @@ import (
 )
 
 type Set struct {
-	Key  string
-	Conn redis.Conn
+	Key         string
+	Conn        redis.Conn
 	TrackingKey string
 }
 
@@ -68,6 +68,10 @@ func (s *Set) GetRank(rank int64) (bool, string, int64, error) {
 
 func (s *Set) Get(start_time int64, end_time int64) ([]string, []int64, error) {
 	return s.parseResponse(redis.Strings(s.Conn.Do("ZRANGEBYSCORE", s.Key, start_time, end_time, "WITHSCORES")))
+}
+
+func (s *Set) GetN(start_time int64, limit int64) ([]string, []int64, error) {
+	return s.parseResponse(redis.Strings(s.Conn.Do("ZREVRANGEBYSCORE", s.Key, start_time, "-inf", "WITHSCORES", "LIMIT", "0", limit)))
 }
 
 func (s *Set) Expire(timestamp int64, fn func(key string, value string, score int64) error) error {
