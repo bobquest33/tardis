@@ -91,6 +91,21 @@ func (s *SetSuite) TestSchedulerPattern(c *check.C) {
 	c.Assert(ran, check.Equals, "run body")
 }
 
+func (s *SetSuite) TestSetGetN(c *check.C) {
+	err := set.Add("1234", 1)
+	c.Assert(err, check.IsNil)
+	err = set.Add("3456", 2)
+	c.Assert(err, check.IsNil)
+	err = set.Add("4567", 3)
+
+	keys, scores, err := set.GetN(3, 2)
+	c.Assert(err, check.IsNil)
+
+	c.Assert(len(keys), check.Equals, 2)
+	c.Check(int(scores[0]), check.Equals, 3) // cast from int64 to int
+	c.Check(int(scores[1]), check.Equals, 2)
+}
+
 func (s *SetSuite) TestRemove(c *check.C) {
 	err := set.Add("1234", 1000)
 	c.Assert(err, check.IsNil)
