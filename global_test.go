@@ -23,3 +23,11 @@ func (s *GlobalSuite) TestParseEvent(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(event["shop_id"], check.Equals, "12345")
 }
+
+func (s *GlobalSuite) TestDecodeInt(c *check.C) {
+	var stream = []byte(`{"key": 12345 , "key2": "12345" }`)
+	m, err := ParseEvent(stream)
+	c.Assert(err, check.IsNil)
+	c.Check(m["key"], check.Equals, "12345")
+	c.Check(m["key2"], check.Equals, "12345")
+}

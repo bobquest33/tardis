@@ -31,7 +31,7 @@ func (s *Scheduler) run(shutdown chan bool) {
 		case <-shutdown:
 			return
 		case <-timeout:
-			s.runJobs()
+			go s.runJobs()
 		}
 	}
 }

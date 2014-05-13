@@ -1,10 +1,5 @@
 package tardis
 
-import (
-	// "github.com/rcrowley/go-metrics"
-	// "time"
-)
-
 type Monitor struct {
 	QualifyCount int64
 
@@ -21,4 +16,3 @@ func (m *Monitor) Qualify() (bool, error) {
 	}
 	return true, nil
 }
-
