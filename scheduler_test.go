@@ -10,23 +10,16 @@ type SchedulerSuite struct{}
 var _ = check.Suite(&SchedulerSuite{})
 
 var (
-	scheduler = &Scheduler{Period: 1 * time.Second, Set: Set{Key: "scheduler"}}
+	scheduler = &Scheduler{Period: 1 * time.Second, Key: "scheduler", Conn: &RedisConn{Address: ":6379"}}
 )
 
-func (s *SchedulerSuite) SetUpSuite(c *check.C) {
-	var err error
-	conn := &RedisConn{Address: ":6379"}
-
-	scheduler.Conn, err = conn.Conn()
-
-	if err != nil {
-		panic("err connecting to redis on :6379")
-	}
-}
-
 func (s *SchedulerSuite) SetUpTest(c *check.C) {
-	scheduler.Conn.Do("FLUSHALL")
-	scheduler.TrackingKey = "tardis:sets"
+	conn, err := scheduler.Conn.Conn()
+	if err != nil {
+		panic("Error connecting to redis")
+	}
+	defer conn.Close()
+	conn.Do("FLUSHALL")
 }
 
 func (s *SchedulerSuite) TestScheduler(c *check.C) {

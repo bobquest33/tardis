@@ -1,11 +1,13 @@
 package tardis
 
 import (
+	"fmt"
 	"time"
 )
 
 type Scheduler struct {
-	Set
+	Key     string
+	Conn    *RedisConn
 	Period  time.Duration
 	Execute func(job string, timestamp int64) error
 }
@@ -17,8 +19,6 @@ func (s *Scheduler) Start() chan bool {
 }
 
 func (s *Scheduler) run(shutdown chan bool) {
-	conn := s.Conn
-	defer conn.Close()
 	timeout := make(chan bool, 1)
 
 	for true {
@@ -37,8 +37,24 @@ func (s *Scheduler) run(shutdown chan bool) {
 }
 
 func (s *Scheduler) runJobs() error {
-	err := s.Expire(time.Now().Unix(), func(set string, key string, value int64) error {
+	conn, err := s.Conn.Conn()
+	if err != nil {
+		return err
+	}
+	set := &Set{Key: s.Key, Conn: conn, TrackingKey: fmt.Sprintf("scheduler-%s-tracking", s.Key)}
+	defer conn.Close()
+	err = set.Expire(time.Now().Unix(), func(set string, key string, value int64) error {
 		return s.Execute(key, value)
 	})
 	return err
+}
+
+func (s *Scheduler) Add(value string, score int64) error {
+	conn, err := s.Conn.Conn()
+	if err != nil {
+		return err
+	}
+	set := &Set{Key: s.Key, Conn: conn, TrackingKey: fmt.Sprintf("scheduler-%s-tracking", s.Key)}
+	defer conn.Close()
+	return set.Add(value, score)
 }
