@@ -1,7 +1,6 @@
 package tardis
 
 import (
-	"fmt"
 	"gopkg.in/check.v1"
 	"testing"
 )
@@ -32,16 +31,7 @@ func (s *MonitorSuite) SetUpSuite(c *check.C) {
 func (s *MonitorSuite) SetUpTest(c *check.C) {
 	monitor.Conn.Do("FLUSHALL")
 
-	var cumulative int64
-	cumulative = 0
-
-	for _, delta := range deltas {
-		cumulative += delta
-		err := monitor.Add(fmt.Sprintf("data-%v", cumulative), cumulative)
-		if err != nil {
-			panic("err connecting to redis on :6379")
-		}
-	}
+	insertDeltas(monitor, testDeltas)
 }
 
 func (s *MonitorSuite) TestQualify(c *check.C) {
