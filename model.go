@@ -39,6 +39,9 @@ func startOfWeek(timeStamp int64) time.Time {
 	return time.Date(yr, mth, (day - int(weekDay)), 0, 0, 0, 0, time.UTC)
 }
 func (m *Model) WarpTime(t int64) int64 {
+        if m.TimeWarp == nil {
+          return t
+        }
 	startOfWeek := startOfWeek(t)
 	dur := time.Unix(t, 0).Sub(startOfWeek)
 	realFraction := float64(dur) / float64(hoursInWeek) // true elapsed percentage of week
@@ -48,7 +51,9 @@ func (m *Model) WarpTime(t int64) int64 {
 }
 
 func (m *Model) UnWarpTime(t int64) int64 {
-
+        if m.TimeWarp == nil {
+          return t
+        }
 	startOfWeek := startOfWeek(t)
 	dur := time.Unix(t, 0).Sub(startOfWeek)
 	modelFraction := float64(dur) / float64(hoursInWeek) // true elapsed percentage of week
