@@ -60,3 +60,9 @@ func (s *ModelSuite) TestProbability(c *check.C) {
 
 	// c.Check(pr,check.Equals,  2.0)
 }
+
+func (s *ModelSuite) TestNilWarp(c *check.C) {
+        model := &Model{}
+        c.Assert(model.WarpTime(100), check.Equals, int64(100))
+        c.Assert(model.UnWarpTime(100), check.Equals, int64(100))
+}
