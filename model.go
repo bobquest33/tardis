@@ -39,7 +39,7 @@ func startOfWeek(timeStamp int64) time.Time {
 	return time.Date(yr, mth, (day - int(weekDay)), 0, 0, 0, 0, time.UTC)
 }
 func (m *Model) WarpTime(t int64) int64 {
-        if m.TimeWarp == nil {
+        if m.TimeWarp == nil || len(m.TimeWarp) < 2{
           return t
         }
 	startOfWeek := startOfWeek(t)
@@ -51,7 +51,7 @@ func (m *Model) WarpTime(t int64) int64 {
 }
 
 func (m *Model) UnWarpTime(t int64) int64 {
-        if m.TimeWarp == nil {
+        if m.TimeWarp == nil || len(m.TimeWarp) < 2{
           return t
         }
 	startOfWeek := startOfWeek(t)
